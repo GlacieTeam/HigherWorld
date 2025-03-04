@@ -1,0 +1,6 @@
+/bin
+/build
+/.vs
+/.vscode
+/.xmake
+CMakeLists.txt
