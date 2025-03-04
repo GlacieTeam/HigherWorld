@@ -1,6 +1,7 @@
-#include "mod/MyMod.h"
+#include "mod/HigherWorld.h"
 #include "ll/api/memory/Hook.h"
 #include "ll/api/mod/RegisterHelper.h"
+#include "ll/api/service/GamingStatus.h"
 #include "mc/network/MinecraftPackets.h"
 #include "mc/network/NetworkIdentifier.h"
 #include "mc/network/PacketObserver.h"
@@ -10,29 +11,36 @@
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/dimension/DimensionDefinitionGroup.h"
 #include "mc/world/level/dimension/DimensionHeightRange.h"
+#include "mc/world/level/dimension/VanillaDimensions.h"
 
-namespace my_mod {
+namespace glacie_team {
 
-MyMod& MyMod::getInstance() {
-    static MyMod instance;
+HigherWorld& HigherWorld::getInstance() {
+    static HigherWorld instance;
     return instance;
 }
 
-bool MyMod::load() { return true; }
+bool HigherWorld::load() { return true; }
 
-bool MyMod::enable() {
+bool HigherWorld::enable() {
     auto& logger = getSelf().getLogger();
     logger.info("HigherWorld loaded!");
     logger.info("Overworld Max Height is now 512!");
-    logger.info("Author: KobeBryant114514(Caixukun1919810)");
+    logger.info("Repository: https://github.com/GlacieTeam/HigherWorld");
     return true;
 }
 
-bool MyMod::disable() { return true; }
+bool HigherWorld::disable() {
+    if (ll::getGamingStatus() != ll::GamingStatus::Stopping) {
+        getSelf().getLogger().error("The server is not stopped and HigherWorld cannot be disabled");
+        return false;
+    }
+    return true;
+}
 
-} // namespace my_mod
+} // namespace glacie_team
 
-LL_REGISTER_MOD(my_mod::MyMod, my_mod::MyMod::getInstance());
+LL_REGISTER_MOD(glacie_team::HigherWorld, glacie_team::HigherWorld::getInstance());
 
 LL_AUTO_TYPE_INSTANCE_HOOK(
     DimensionConstructor,
@@ -46,7 +54,7 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
     Scheduler&           callbackContext,
     std::string          name
 ) {
-    if (dimId.id == 0) {
+    if (dimId == VanillaDimensions::Overworld()) {
         heightRange.mMax = 512;
     }
     return origin(level, dimId, heightRange, callbackContext, name);
@@ -63,6 +71,7 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
     uint                     size
 ) {
     if (packet.getId() == MinecraftPacketIds::StartGame) {
+        // DimensionDataPacket must be sent after StartGamePacket
         auto defPkt = std::static_pointer_cast<DimensionDataPacket>(
             MinecraftPackets::createPacket(MinecraftPacketIds::DimensionDataPacket)
         );
@@ -73,6 +82,7 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
     return origin(netId, packet, size);
 };
 
+// Disable client side generation
 LL_AUTO_TYPE_INSTANCE_HOOK(
     ClientGen,
     ll::memory::HookPriority::Normal,
