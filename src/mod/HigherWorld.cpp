@@ -4,10 +4,11 @@
 #include "ll/api/service/GamingStatus.h"
 #include "mc/network/MinecraftPackets.h"
 #include "mc/network/NetworkIdentifier.h"
-#include "mc/network/PacketObserver.h"
+#include "mc/network/ServerNetworkHandler.h"
 #include "mc/network/packet/DimensionDataPacket.h"
 #include "mc/network/packet/Packet.h"
 #include "mc/server/PropertiesSettings.h"
+#include "mc/server/ServerPlayer.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/dimension/DimensionDefinitionGroup.h"
 #include "mc/world/level/dimension/DimensionHeightRange.h"
@@ -63,23 +64,19 @@ LL_AUTO_TYPE_INSTANCE_HOOK(
 LL_AUTO_TYPE_INSTANCE_HOOK(
     PacketSend,
     HookPriority::Normal,
-    PacketObserver,
-    &PacketObserver::$packetSentTo,
+    ServerNetworkHandler,
+    &ServerNetworkHandler::_sendLevelData,
     void,
-    const NetworkIdentifier& netId,
-    const Packet&            packet,
-    uint                     size
+    ServerPlayer&            newPlayer,
+    const NetworkIdentifier& source
 ) {
-    if (packet.getId() == MinecraftPacketIds::StartGame) {
-        // DimensionDataPacket must be sent after StartGamePacket
-        auto defPkt = std::static_pointer_cast<DimensionDataPacket>(
-            MinecraftPackets::createPacket(MinecraftPacketIds::DimensionDataPacket)
-        );
-        defPkt->mDimensionDefinitionGroup->mDimensionDefinitions.get()["minecraft:overworld"] =
-            DimensionDefinitionGroup::DimensionDefinition(-64, 512, GeneratorType::Void);
-        defPkt->sendToClient(netId, SubClientId::PrimaryClient);
-    }
-    return origin(netId, packet, size);
+    auto defPkt = std::static_pointer_cast<DimensionDataPacket>(
+        MinecraftPackets::createPacket(MinecraftPacketIds::DimensionDataPacket)
+    );
+    defPkt->mDimensionDefinitionGroup->mDimensionDefinitions.get()["minecraft:overworld"] =
+        DimensionDefinitionGroup::DimensionDefinition(-64, 512, GeneratorType::Void);
+    defPkt->sendTo(newPlayer);
+    return origin(newPlayer, source);
 };
 
 // Disable client side generation
