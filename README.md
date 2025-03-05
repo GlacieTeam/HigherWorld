@@ -24,7 +24,7 @@ lip install github.com/GlacieTeam/HigherWorld
 - [Open an issue](https://github.com/GlacieTeam/HigherWorld/issues) to report bugs.
 
 ## License
-- [GitHub Release](https://github.com/GlacieTeam/HigherWorld/releases) is the sole and exclusive official source for downloading. Any other source of download is unauthorized and constitutes illegal reproduction. 
-- Unauthorized reproduction, integration, or redistribution is strictly prohibited.
+Please note that this project is licensed under the [GPLv3](LICENSE).   
+If you modify or distribute this project, you must comply with the requirements of the GPLv3 license, including but not limited to providing the complete source code and retaining the copyright notices. For more detailed information, please visit the GNU Official Website.
 
 ### Copyright © 2025 GlacieTeam. All rights reserved.
